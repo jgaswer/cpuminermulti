@@ -1,101 +1,46 @@
-FROM debian:bullseye
-
+FROM  debian:bullseye
 RUN set -x \
-
     # Runtime dependencies.
-
  && apt-get update \
-
- && apt-get install -y \
-
-        libcurl3 \
-
-        libgmp10 \
-
-        libjansson4 \
-
-        libssl1.0.0 \
-
-        openssl \
-
+ && apt-get upgrade -y \
     # Build dependencies.
-
  && apt-get install -y \
-
         autoconf \
-
         automake \
-
         curl \
-
         g++ \
-
         git \
-
         libcurl4-openssl-dev \
-
         libjansson-dev \
-
         libssl-dev \
-
         libgmp-dev \
-
+        libz-dev \
         make \
-
-        pkg-config \
-
+        pkg-config
+RUN set -x \
     # Compile from source code.
-
  && git clone --recursive https://github.com/tpruvot/cpuminer-multi.git /tmp/cpuminer \
-
  && cd /tmp/cpuminer \
-
+ && git checkout v3.16.3 \
  && ./autogen.sh \
-
- && ./configure CFLAGS="-O2 -march=native" --with-crypto --with-curl \
-
+ && extracflags="$extracflags -Ofast -flto -fuse-linker-plugin -ftree-loop-if-convert-stores" \
+ && CFLAGS="-O3 -march=native -Wall" ./configure --with-curl  \
  && make install -j 4 \
-
-    # 
-
     # Clean-up
-
  && cd / \
-
  && apt-get purge --auto-remove -y \
-
         autoconf \
-
         automake \
-
         curl \
-
         g++ \
-
         git \
-
-        libcurl4-openssl-dev \
-
-        libjansson-dev \
-
-        libssl-dev \
-
-        libgmp-dev \
-
         make \
-
         pkg-config \
-
  && apt-get clean \
-
  && rm -rf /var/lib/apt/lists/* \
-
  && rm -rf /tmp/* \
-
     # Verify
-
  && cpuminer --cputest \
-
  && cpuminer --version
 
 WORKDIR /cpuminer
